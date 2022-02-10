@@ -147,7 +147,7 @@ class UsernamePasswordProvider(Provider):
         return await self.admin_model.objects.create(username=username, password=password, **kwargs)
 
     async def init_view(self, request: Request):
-        exists = await self.admin_model.objects.all().limit(1).exists()
+        exists = await self.admin_model.objects.all().limit(1).count()
         if exists:
             return self.redirect_login(request)
         return templates.TemplateResponse("init.html", context={"request": request})
