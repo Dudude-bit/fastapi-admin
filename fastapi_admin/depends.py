@@ -9,19 +9,14 @@ from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 from fastapi_admin.exceptions import InvalidResource
 from fastapi_admin.resources import Dropdown, Link, Model, Resource
-import mongoengine
+from mongoengine.base.common import get_document
 
 
-def get_model(resource: Optional[str] = Path(...)): # TODO remake with getting all models on init
+def get_model(resource: Optional[str] = Path(...)):
     if not resource:
         return
-    models = {
-        obj._get_collection_name(): obj for obj in gc.get_objects() if inspect.isclass(obj)
-                                                                   and issubclass(obj, Document)
-                                                                   and obj is not Document
-                                                                   and obj._get_collection_name() is not None
-    }
-    return models[resource]
+    print(get_document(resource), flush=True)
+    return get_document(resource)
 
 
 async def get_model_resource(request: Request, model=Depends(get_model)):
