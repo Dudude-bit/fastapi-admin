@@ -69,13 +69,13 @@ class UsernamePasswordProvider(Provider):
         app.post("/password")(self.password)
         signals.pre_save.connect(sender=self.admin_model, receiver=self.pre_save_admin)
 
-    async def pre_save_admin(self, _, instance: AbstractAdmin, using_db, update_fields):
-        if instance.pk:
-            db_obj = instance.objects.get(pk=instance.pk)
-            if db_obj.password != instance.password:
-                instance.password = hash_password(instance.password)
+    def pre_save_admin(self, sender, document, **kwargs):
+        if document.pk:
+            db_obj = document.objects.get(pk=document.pk)
+            if db_obj.password != document.password:
+                document.password = hash_password(document.password)
         else:
-            instance.password = hash_password(instance.password)
+            document.password = hash_password(document.password)
 
     async def login(self, request: Request, redis: Redis = Depends(get_redis)):
         form = await request.form()
