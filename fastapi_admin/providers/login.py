@@ -8,7 +8,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER, HTTP_401_UNAUTHORIZED
-from tortoise import signals
+from mongoengine import signals, DoesNotExist
 
 from fastapi_admin import constants
 from fastapi_admin.depends import get_current_admin, get_redis, get_resources
@@ -67,7 +67,7 @@ class UsernamePasswordProvider(Provider):
         app.post("/init")(self.init)
         app.get("/password")(self.password_view)
         app.post("/password")(self.password)
-        signals.pre_save(self.admin_model)(self.pre_save_admin)
+        signals.pre_save.connect(sender=self.admin_model, receiver=self.pre_save_admin)
 
     async def pre_save_admin(self, _, instance: AbstractAdmin, using_db, update_fields):
         if instance.pk:
@@ -82,7 +82,10 @@ class UsernamePasswordProvider(Provider):
         username = form.get("username")
         password = form.get("password")
         remember_me = form.get("remember_me")
-        admin = await self.admin_model.get_or_none(username=username)
+        try:
+            admin = self.admin_model.objects.get(username=username)
+        except DoesNotExist:
+            admin = None
         if not admin or not check_password(password, admin.password):
             return templates.TemplateResponse(
                 self.template,
@@ -104,7 +107,7 @@ class UsernamePasswordProvider(Provider):
             path=request.app.admin_path,
             httponly=True,
         )
-        await redis.set(constants.LOGIN_USER.format(token=token), admin.pk, ex=expire)
+        await redis.set(constants.LOGIN_USER.format(token=token), str(admin.pk), ex=expire)
         return response
 
     async def logout(self, request: Request):
@@ -126,7 +129,10 @@ class UsernamePasswordProvider(Provider):
         if token:
             token_key = constants.LOGIN_USER.format(token=token)
             admin_id = await redis.get(token_key)
-            admin = await self.admin_model.get_or_none(pk=admin_id)
+            try:
+                admin = self.admin_model.objects.get(pk=admin_id)
+            except DoesNotExist:
+                admin = None
         request.state.admin = admin
 
         if path == self.login_path and admin:
@@ -136,10 +142,10 @@ class UsernamePasswordProvider(Provider):
         return response
 
     async def create_user(self, username: str, password: str, **kwargs):
-        return await self.admin_model.create(username=username, password=password, **kwargs)
+        return await self.admin_model.objects.create(username=username, password=password, **kwargs)
 
     async def init_view(self, request: Request):
-        exists = await self.admin_model.all().limit(1).exists()
+        exists = await self.admin_model.objects.all().limit(1).exists()
         if exists:
             return self.redirect_login(request)
         return templates.TemplateResponse("init.html", context={"request": request})
@@ -148,7 +154,7 @@ class UsernamePasswordProvider(Provider):
         self,
         request: Request,
     ):
-        exists = await self.admin_model.all().limit(1).exists()
+        exists = await self.admin_model.objects.all().limit(1).exists()
         if exists:
             return self.redirect_login(request)
         form = await request.form()

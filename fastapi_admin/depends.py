@@ -1,23 +1,27 @@
+import gc
+import inspect
 from typing import List, Optional, Type
 
 from fastapi import Depends, HTTPException
 from fastapi.params import Path
+from mongoengine import Document
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
-from tortoise import Tortoise
-
 from fastapi_admin.exceptions import InvalidResource
 from fastapi_admin.resources import Dropdown, Link, Model, Resource
+import mongoengine
 
 
-def get_model(resource: Optional[str] = Path(...)):
+def get_model(resource: Optional[str] = Path(...)): # TODO remake with getting all models on init
     if not resource:
         return
-    for app, models in Tortoise.apps.items():
-        models = {key.lower(): val for key, val in models.items()}
-        model = models.get(resource)
-        if model:
-            return model
+    models = {
+        obj._get_collection_name(): obj for obj in gc.get_objects() if inspect.isclass(obj)
+                                                                   and issubclass(obj, Document)
+                                                                   and obj is not Document
+                                                                   and obj._get_collection_name() is not None
+    }
+    return models[resource]
 
 
 async def get_model_resource(request: Request, model=Depends(get_model)):

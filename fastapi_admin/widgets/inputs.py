@@ -3,9 +3,10 @@ import json
 from enum import Enum as EnumCLS
 from typing import Any, List, Optional, Tuple, Type
 
+import bson
+from mongoengine import Document
 from starlette.datastructures import UploadFile
 from starlette.requests import Request
-from tortoise import Model
 
 from fastapi_admin.file_upload import FileUpload
 from fastapi_admin.widgets import Widget
@@ -15,7 +16,7 @@ class Input(Widget):
     template = "widgets/inputs/input.html"
 
     def __init__(
-        self, help_text: Optional[str] = None, default: Any = None, null: bool = False, **context
+            self, help_text: Optional[str] = None, default: Any = None, null: bool = False, **context
     ):
         super().__init__(null=null, help_text=help_text, **context)
         self.default = default
@@ -44,12 +45,12 @@ class Text(Input):
     input_type: Optional[str] = "text"
 
     def __init__(
-        self,
-        help_text: Optional[str] = None,
-        default: Any = None,
-        null: bool = False,
-        placeholder: str = "",
-        disabled: bool = False,
+            self,
+            help_text: Optional[str] = None,
+            default: Any = None,
+            null: bool = False,
+            placeholder: str = "",
+            disabled: bool = False,
     ):
         super().__init__(
             null=null,
@@ -65,11 +66,11 @@ class Select(Input):
     template = "widgets/inputs/select.html"
 
     def __init__(
-        self,
-        help_text: Optional[str] = None,
-        default: Any = None,
-        null: bool = False,
-        disabled: bool = False,
+            self,
+            help_text: Optional[str] = None,
+            default: Any = None,
+            null: bool = False,
+            disabled: bool = False,
     ):
         super().__init__(help_text=help_text, null=null, default=default, disabled=disabled)
 
@@ -91,12 +92,12 @@ class Select(Input):
 
 class ForeignKey(Select):
     def __init__(
-        self,
-        model: Type[Model],
-        default: Any = None,
-        null: bool = False,
-        disabled: bool = False,
-        help_text: Optional[str] = None,
+            self,
+            model: Type[Document],
+            default: Any = None,
+            null: bool = False,
+            disabled: bool = False,
+            help_text: Optional[str] = None,
     ):
         super().__init__(help_text=help_text, default=default, null=null, disabled=disabled)
         self.model = model
@@ -116,10 +117,10 @@ class ManyToMany(Select):
     template = "widgets/inputs/many_to_many.html"
 
     def __init__(
-        self,
-        model: Type[Model],
-        disabled: bool = False,
-        help_text: Optional[str] = None,
+            self,
+            model: Type[Document],
+            disabled: bool = False,
+            help_text: Optional[str] = None,
     ):
         super().__init__(help_text=help_text, disabled=disabled)
         self.model = model
@@ -144,13 +145,13 @@ class ManyToMany(Select):
 
 class Enum(Select):
     def __init__(
-        self,
-        enum: Type[EnumCLS],
-        default: Any = None,
-        enum_type: Type = int,
-        null: bool = False,
-        disabled: bool = False,
-        help_text: Optional[str] = None,
+            self,
+            enum: Type[EnumCLS],
+            default: Any = None,
+            enum_type: Type = int,
+            null: bool = False,
+            disabled: bool = False,
+            help_text: Optional[str] = None,
     ):
         super().__init__(help_text=help_text, default=default, null=null, disabled=disabled)
         self.enum = enum
@@ -174,10 +175,10 @@ class Json(Input):
     template = "widgets/inputs/json.html"
 
     def __init__(
-        self,
-        help_text: Optional[str] = None,
-        null: bool = False,
-        options: Optional[dict] = None,
+            self,
+            help_text: Optional[str] = None,
+            null: bool = False,
+            options: Optional[dict] = None,
     ):
         """
         options config to jsoneditor, see https://github.com/josdejong/jsoneditor
@@ -215,12 +216,12 @@ class File(Input):
     input_type = "file"
 
     def __init__(
-        self,
-        upload: FileUpload,
-        default: Any = None,
-        null: bool = False,
-        disabled: bool = False,
-        help_text: Optional[str] = None,
+            self,
+            upload: FileUpload,
+            default: Any = None,
+            null: bool = False,
+            disabled: bool = False,
+            help_text: Optional[str] = None,
     ):
         super().__init__(
             null=null,
@@ -246,11 +247,11 @@ class Radio(Select):
     template = "widgets/inputs/radio.html"
 
     def __init__(
-        self,
-        options: List[Tuple[str, Any]],
-        help_text: Optional[str] = None,
-        default: Any = None,
-        disabled: bool = False,
+            self,
+            options: List[Tuple[str, Any]],
+            help_text: Optional[str] = None,
+            default: Any = None,
+            disabled: bool = False,
     ):
         super().__init__(default=default, disabled=disabled, help_text=help_text)
         self.options = options
@@ -282,3 +283,19 @@ class Number(Text):
 
 class Color(Text):
     template = "widgets/inputs/color.html"
+
+
+class ObjectIdText(Text):
+
+    async def parse_value(self, request: Request, value: Any):
+        """
+        Parse value from frontend
+        :param value:
+        :return:
+        """
+        return bson.ObjectId(value)
+
+    async def render(self, request: Request, value: Any):
+        if value is None:
+            value = self.default
+        return await super(Input, self).render(request, value)

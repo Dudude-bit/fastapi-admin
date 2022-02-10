@@ -1,43 +1,48 @@
+import json
+
+import mongoengine
+import orjson
+from bson import json_util
+from bson.json_util import RELAXED_JSON_OPTIONS, CANONICAL_JSON_OPTIONS
 from fastapi import APIRouter, Depends, Path
 from jinja2 import TemplateNotFound
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 from starlette.status import HTTP_303_SEE_OTHER
-from tortoise import Model
-from tortoise.fields import ManyToManyRelation
-from tortoise.transactions import in_transaction
+from mongoengine import Document
 
 from fastapi_admin.depends import get_model, get_model_resource, get_resources
 from fastapi_admin.resources import Model as ModelResource
 from fastapi_admin.resources import render_values
 from fastapi_admin.responses import redirect
 from fastapi_admin.template import templates
+from fastapi_admin.utils import default_json
 
 router = APIRouter()
 
 
 @router.get("/{resource}/list")
 async def list_view(
-    request: Request,
-    model: Model = Depends(get_model),
-    resources=Depends(get_resources),
-    model_resource: ModelResource = Depends(get_model_resource),
-    resource: str = Path(...),
-    page_size: int = 10,
-    page_num: int = 1,
+        request: Request,
+        model: Document = Depends(get_model),
+        resources=Depends(get_resources),
+        model_resource: ModelResource = Depends(get_model_resource),
+        resource: str = Path(...),
+        page_size: int = 10,
+        page_num: int = 1,
 ):
     fields_label = model_resource.get_fields_label()
     fields = model_resource.get_fields()
-    qs = model.all()
+    qs = model.objects.all()
     params, qs = await model_resource.resolve_query_params(request, dict(request.query_params), qs)
     filters = await model_resource.get_filters(request, params)
-    total = await qs.count()
+    total = qs.count()
     if page_size:
         qs = qs.limit(page_size)
     else:
         page_size = model_resource.page_size
-    qs = qs.offset((page_num - 1) * page_size)
-    values = await qs.values()
+    qs = qs.skip((page_num - 1) * page_size)
+    values = qs.values_list()
     rendered_values, row_attributes, column_attributes, cell_attributes = await render_values(
         request, model_resource, fields, values
     )
@@ -77,35 +82,23 @@ async def list_view(
 
 @router.post("/{resource}/update/{pk}")
 async def update(
-    request: Request,
-    resource: str = Path(...),
-    pk: str = Path(...),
-    model_resource: ModelResource = Depends(get_model_resource),
-    resources=Depends(get_resources),
-    model=Depends(get_model),
+        request: Request,
+        resource: str = Path(...),
+        pk: str = Path(...),
+        model_resource: ModelResource = Depends(get_model_resource),
+        resources=Depends(get_resources),
+        model=Depends(get_model),
 ):
     form = await request.form()
     data, m2m_data = await model_resource.resolve_data(request, form)
-    async with in_transaction() as conn:
-        obj = (
-            await model.filter(pk=pk)
-            .using_db(conn)
-            .select_for_update()
-            .get()
-            .prefetch_related(*model_resource.get_m2m_field())
-        )
-        await obj.update_from_dict(data).save(using_db=conn)
-        for k, items in m2m_data.items():
-            m2m_obj = getattr(obj, k)
-            await m2m_obj.clear()
-            if items:
-                await m2m_obj.add(*items)
-        obj = (
-            await model.filter(pk=pk)
-            .using_db(conn)
-            .get()
-            .prefetch_related(*model_resource.get_m2m_field())
-        )
+    obj: Document = model.objects.filter(pk=pk)
+    obj.update(**data)
+    for k, items in m2m_data.items():
+        m2m_obj = getattr(obj, k)
+        await m2m_obj.clear()
+        if items:
+            await m2m_obj.add(*items)
+    obj = model.objects.filter(pk=pk)
     inputs = await model_resource.get_inputs(request, obj)
     if "save" in form.keys():
         context = {
@@ -134,14 +127,14 @@ async def update(
 
 @router.get("/{resource}/update/{pk}")
 async def update_view(
-    request: Request,
-    resource: str = Path(...),
-    pk: str = Path(...),
-    model_resource: ModelResource = Depends(get_model_resource),
-    resources=Depends(get_resources),
-    model=Depends(get_model),
+        request: Request,
+        resource: str = Path(...),
+        pk: str = Path(...),
+        model_resource: ModelResource = Depends(get_model_resource),
+        resources=Depends(get_resources),
+        model=Depends(get_model),
 ):
-    obj = await model.get(pk=pk)
+    obj = model.objects.get(pk=pk)
     inputs = await model_resource.get_inputs(request, obj)
     context = {
         "request": request,
@@ -168,10 +161,10 @@ async def update_view(
 
 @router.get("/{resource}/create")
 async def create_view(
-    request: Request,
-    resource: str = Path(...),
-    resources=Depends(get_resources),
-    model_resource: ModelResource = Depends(get_model_resource),
+        request: Request,
+        resource: str = Path(...),
+        resources=Depends(get_resources),
+        model_resource: ModelResource = Depends(get_model_resource),
 ):
     inputs = await model_resource.get_inputs(request)
     context = {
@@ -198,20 +191,17 @@ async def create_view(
 
 @router.post("/{resource}/create")
 async def create(
-    request: Request,
-    resource: str = Path(...),
-    resources=Depends(get_resources),
-    model_resource: ModelResource = Depends(get_model_resource),
-    model=Depends(get_model),
+        request: Request,
+        resource: str = Path(...),
+        resources=Depends(get_resources),
+        model_resource: ModelResource = Depends(get_model_resource),
+        model=Depends(get_model),
 ):
     inputs = await model_resource.get_inputs(request)
     form = await request.form()
     data, m2m_data = await model_resource.resolve_data(request, form)
-    async with in_transaction() as conn:
-        obj = await model.create(**data, using_db=conn)
-        for k, items in m2m_data.items():
-            m2m_obj = getattr(obj, k)  # type:ManyToManyRelation
-            await m2m_obj.add(*items, using_db=conn)
+    obj: Document = model(**data)
+    obj.save()
     if "save" in form.keys():
         return redirect(request, "list_view", resource=resource)
     context = {
@@ -237,12 +227,12 @@ async def create(
 
 
 @router.delete("/{resource}/delete/{pk}")
-async def delete(request: Request, pk: str, model: Model = Depends(get_model)):
-    await model.filter(pk=pk).delete()
+async def delete(request: Request, pk: str, model: Document = Depends(get_model)):
+    model.objects.filter(pk=pk).delete()
     return RedirectResponse(url=request.headers.get("referer"), status_code=HTTP_303_SEE_OTHER)
 
 
 @router.delete("/{resource}/delete")
-async def bulk_delete(request: Request, ids: str, model: Model = Depends(get_model)):
-    await model.filter(pk__in=ids.split(",")).delete()
+async def bulk_delete(request: Request, ids: str, model: Document = Depends(get_model)):
+    model.objects.filter(pk__in=ids.split(",")).delete()
     return RedirectResponse(url=request.headers.get("referer"), status_code=HTTP_303_SEE_OTHER)

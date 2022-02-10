@@ -1,10 +1,12 @@
+import gc
+import inspect
 from typing import Dict, List, Optional, Type
 
 from aioredis import Redis
 from fastapi import FastAPI
 from pydantic import HttpUrl
 from starlette.middleware.base import BaseHTTPMiddleware
-from tortoise import Model
+from mongoengine import Document
 
 from fastapi_admin import i18n
 
@@ -21,7 +23,7 @@ class FastAPIAdmin(FastAPI):
     login_logo_url: str
     admin_path: str
     resources: List[Type[Resource]] = []
-    model_resources: Dict[Type[Model], Type[Resource]] = {}
+    model_resources: Dict[Type[Document], Type[Resource]] = {}
     redis: Redis
     language_switch: bool = True
     favicon_url: Optional[HttpUrl] = None
@@ -66,7 +68,7 @@ class FastAPIAdmin(FastAPI):
         self._set_model_resource(resource)
         self.resources.append(resource)
 
-    def get_model_resource(self, model: Type[Model]):
+    def get_model_resource(self, model: Type[Document]):
         r = self.model_resources.get(model)
         return r() if r else None
 

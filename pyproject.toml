@@ -29,9 +29,11 @@ fastapi = "*"
 jinja2 = "*"
 python = "^3.7"
 python-multipart = "*"
-tortoise-orm = "*"
 uvicorn = { version = "*", extras = ["standard"] }
 pendulum = "*"
+mongoengine = "^0.23.1"
+blinker = "^1.4"
+orjson = "^3.6.6"
 
 [tool.poetry.dev-dependencies]
 # test

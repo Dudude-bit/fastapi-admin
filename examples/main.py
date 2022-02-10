@@ -1,6 +1,7 @@
 import os
 
 import aioredis
+import mongoengine
 import uvicorn
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
@@ -12,7 +13,7 @@ from starlette.status import (
     HTTP_404_NOT_FOUND,
     HTTP_500_INTERNAL_SERVER_ERROR,
 )
-from tortoise.contrib.fastapi import register_tortoise
+from mongoengine import register_connection
 
 from examples import settings
 from examples.constants import BASE_DIR
@@ -73,18 +74,9 @@ def create_app():
         allow_headers=["*"],
         expose_headers=["*"],
     )
-    register_tortoise(
-        app,
-        config={
-            "connections": {"default": settings.DATABASE_URL},
-            "apps": {
-                "models": {
-                    "models": ["examples.models"],
-                    "default_connection": "default",
-                }
-            },
-        },
-        generate_schemas=True,
+    mongoengine.connect(
+        db='click_to_earn_parser',
+        host='localhost'
     )
     return app
 

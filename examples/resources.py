@@ -5,7 +5,7 @@ from starlette.requests import Request
 
 from examples import enums
 from examples.constants import BASE_DIR
-from examples.models import Admin, Category, Config, Product
+from examples.models import Admin, Category, Product
 from fastapi_admin.app import app
 from fastapi_admin.enums import Method
 from fastapi_admin.file_upload import FileUpload
@@ -83,62 +83,20 @@ class Content(Dropdown):
         label = "Product"
         model = Product
         filters = [
-            filters.Enum(enum=enums.ProductType, name="type", label="ProductType"),
-            filters.Datetime(name="created_at", label="CreatedAt"),
+            filters.Enum(enum=enums.ProductType, name="type", label="ProductType")
         ]
         fields = [
-            "id",
             "name",
             "view_num",
             "sort",
             "is_reviewed",
-            "type",
-            Field(name="image", label="Image", display=displays.Image(width="40")),
-            Field(name="body", label="Body", input_=inputs.Editor()),
-            "created_at",
+            "image",
+            "body"
         ]
 
     label = "Content"
     icon = "fas fa-bars"
     resources = [ProductResource, CategoryResource]
-
-
-@app.register
-class ConfigResource(Model):
-    label = "Config"
-    model = Config
-    icon = "fas fa-cogs"
-    filters = [
-        filters.Enum(enum=enums.Status, name="status", label="Status"),
-        filters.Search(name="key", label="Key", search_mode="equal"),
-    ]
-    fields = [
-        "id",
-        "label",
-        "key",
-        "value",
-        Field(
-            name="status",
-            label="Status",
-            input_=inputs.RadioEnum(enums.Status, default=enums.Status.on),
-        ),
-    ]
-
-    async def row_attributes(self, request: Request, obj: dict) -> dict:
-        if obj.get("status") == enums.Status.on:
-            return {"class": "bg-green text-white"}
-        return await super().row_attributes(request, obj)
-
-    async def get_actions(self, request: Request) -> List[Action]:
-        actions = await super().get_actions(request)
-        switch_status = Action(
-            label="Switch Status",
-            icon="ti ti-toggle-left",
-            name="switch_status",
-            method=Method.PUT,
-        )
-        actions.append(switch_status)
-        return actions
 
 
 @app.register

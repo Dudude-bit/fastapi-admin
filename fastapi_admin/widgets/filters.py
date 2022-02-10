@@ -4,8 +4,8 @@ from typing import Any, List, Optional, Tuple, Type
 
 import pendulum
 from starlette.requests import Request
-from tortoise import Model
-from tortoise.queryset import QuerySet
+from mongoengine import Document
+from mongoengine import QuerySet
 
 from fastapi_admin import constants
 from fastapi_admin.widgets.inputs import Input
@@ -144,7 +144,7 @@ class Enum(Select):
 
 
 class ForeignKey(Select):
-    def __init__(self, model: Type[Model], name: str, label: str, null: bool = True):
+    def __init__(self, model: Type[Document], name: str, label: str, null: bool = True):
         super().__init__(name=name, label=label, null=null)
         self.model = model
 
@@ -171,7 +171,7 @@ class ForeignKey(Select):
 
 
 class DistinctColumn(Select):
-    def __init__(self, model: Type[Model], name: str, label: str, null: bool = True):
+    def __init__(self, model: Type[Document], name: str, label: str, null: bool = True):
         super().__init__(name=name, label=label, null=null)
         self.model = model
         self.name = name
@@ -205,7 +205,7 @@ class Boolean(Select):
 
         return options
 
-    async def get_queryset(self, request: Request, value: str, qs: QuerySet[Model]) -> QuerySet[Model]:
+    async def get_queryset(self, request: Request, value: str, qs: QuerySet) -> QuerySet:
         """Return filtered queryset."""
         filters = {self.context.get("name"): (value == "true")}
         return qs.filter(**filters)
