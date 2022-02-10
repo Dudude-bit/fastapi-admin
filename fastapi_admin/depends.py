@@ -15,8 +15,11 @@ from mongoengine.base.common import _document_registry
 def get_model(resource: Optional[str] = Path(...)):
     if not resource:
         return
+    print({
+        key.lower(): _document_registry[key] for key in _document_registry
+    }.get(resource.lower()), flush=True)
     return {
-        key.lower(): key for key in _document_registry
+        key.lower(): _document_registry[key] for key in _document_registry
     }.get(resource.lower())
 
 
