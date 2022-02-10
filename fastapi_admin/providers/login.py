@@ -71,7 +71,7 @@ class UsernamePasswordProvider(Provider):
 
     async def pre_save_admin(self, _, instance: AbstractAdmin, using_db, update_fields):
         if instance.pk:
-            db_obj = await instance.get(pk=instance.pk)
+            db_obj = instance.objects.get(pk=instance.pk)
             if db_obj.password != instance.password:
                 instance.password = hash_password(instance.password)
         else:
@@ -144,10 +144,10 @@ class UsernamePasswordProvider(Provider):
         return response
 
     async def create_user(self, username: str, password: str, **kwargs):
-        return await self.admin_model.objects.create(username=username, password=password, **kwargs)
+        return self.admin_model.objects.create(username=username, password=password, **kwargs)
 
     async def init_view(self, request: Request):
-        exists = await self.admin_model.objects.all().limit(1).count()
+        exists = self.admin_model.objects.all().limit(1).count()
         if exists:
             return self.redirect_login(request)
         return templates.TemplateResponse("init.html", context={"request": request})
@@ -156,7 +156,7 @@ class UsernamePasswordProvider(Provider):
         self,
         request: Request,
     ):
-        exists = await self.admin_model.objects.all().limit(1).exists()
+        exists = self.admin_model.objects.all().limit(1).count()
         if exists:
             return self.redirect_login(request)
         form = await request.form()
@@ -210,5 +210,5 @@ class UsernamePasswordProvider(Provider):
                 context={"request": request, "resources": resources, "error": error},
             )
         admin.password = new_password
-        await admin.save(update_fields=["password"])
+        admin.save(update_fields=["password"])
         return await self.logout(request)
