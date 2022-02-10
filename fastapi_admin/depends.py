@@ -9,14 +9,15 @@ from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 from fastapi_admin.exceptions import InvalidResource
 from fastapi_admin.resources import Dropdown, Link, Model, Resource
-from mongoengine.base.common import get_document
+from mongoengine.base.common import _document_registry
 
 
 def get_model(resource: Optional[str] = Path(...)):
     if not resource:
         return
-    print(get_document(resource), flush=True)
-    return get_document(resource)
+    return {
+        key.lower(): key for key in _document_registry
+    }.get(resource.lower())
 
 
 async def get_model_resource(request: Request, model=Depends(get_model)):
