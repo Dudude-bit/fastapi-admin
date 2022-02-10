@@ -128,9 +128,10 @@ class UsernamePasswordProvider(Provider):
         admin = None
         if token:
             token_key = constants.LOGIN_USER.format(token=token)
-            admin_id = (await redis.get(token_key)).decode()
+            admin_id = await redis.get(token_key)
             admin = None
             if admin_id:
+                admin_id = admin_id.decode()
                 try:
                     admin = self.admin_model.objects.get(pk=admin_id)
                 except DoesNotExist:
