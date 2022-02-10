@@ -128,7 +128,7 @@ class UsernamePasswordProvider(Provider):
         admin = None
         if token:
             token_key = constants.LOGIN_USER.format(token=token)
-            admin_id = await redis.get(token_key)
+            admin_id = (await redis.get(token_key)).decode()
             admin = None
             if admin_id:
                 try:
