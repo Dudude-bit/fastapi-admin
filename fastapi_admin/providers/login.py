@@ -129,10 +129,12 @@ class UsernamePasswordProvider(Provider):
         if token:
             token_key = constants.LOGIN_USER.format(token=token)
             admin_id = await redis.get(token_key)
-            try:
-                admin = self.admin_model.objects.get(pk=admin_id)
-            except DoesNotExist:
-                admin = None
+            admin = None
+            if admin_id:
+                try:
+                    admin = self.admin_model.objects.get(pk=admin_id)
+                except DoesNotExist:
+                    pass
         request.state.admin = admin
 
         if path == self.login_path and admin:
