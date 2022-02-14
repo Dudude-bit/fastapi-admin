@@ -4,7 +4,7 @@ from enum import Enum as EnumCLS
 from typing import Any, List, Optional, Tuple, Type
 
 import bson
-from mongoengine import Document
+from mongoengine import Document, EmbeddedDocument
 from starlette.datastructures import UploadFile
 from starlette.requests import Request
 
@@ -299,3 +299,15 @@ class ObjectIdText(Text):
         if value is None:
             value = self.default
         return await super(Input, self).render(request, value)
+
+
+class EmbeddedDocumentInput(Text):
+
+    async def parse_value(self, request: Request, value: Any):
+        return json.loads(value)
+
+    async def render(self, request: Request, value: EmbeddedDocument):
+        if value is None:
+            value = self.default
+
+        return value.to_json()
