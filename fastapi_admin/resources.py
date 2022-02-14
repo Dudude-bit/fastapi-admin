@@ -53,8 +53,8 @@ class Field:
 
 
 class ComputeField(Field):
-    async def get_value(self, request: Request, obj: dict):
-        return obj.get(self.name)
+    async def get_value(self, request: Request, obj: Document):
+        return getattr(obj, self.name)
 
 
 class Action(BaseModel):
