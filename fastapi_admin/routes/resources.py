@@ -16,7 +16,6 @@ from fastapi_admin.resources import Model as ModelResource
 from fastapi_admin.resources import render_values
 from fastapi_admin.responses import redirect
 from fastapi_admin.template import templates
-from fastapi_admin.utils import default_json
 
 router = APIRouter()
 

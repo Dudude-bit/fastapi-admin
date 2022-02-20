@@ -1,14 +1,16 @@
 import abc
 import json
 from enum import Enum as EnumCLS
-from typing import Any, List, Optional, Tuple, Type
+from typing import Any, List, Optional, Tuple, Type, Union
 
 import bson
-from mongoengine import Document, EmbeddedDocument
+from mongoengine import Document, EmbeddedDocument, EmbeddedDocumentListField
+from bson import json_util
 from starlette.datastructures import UploadFile
 from starlette.requests import Request
 
 from fastapi_admin.file_upload import FileUpload
+from fastapi_admin.utils import ExtendedJsonEncoder
 from fastapi_admin.widgets import Widget
 
 
@@ -306,8 +308,10 @@ class EmbeddedDocumentInput(Text):
     async def parse_value(self, request: Request, value: Any):
         return json.loads(value)
 
-    async def render(self, request: Request, value: EmbeddedDocument):
+    async def render(self, request: Request, value: Union[EmbeddedDocument, EmbeddedDocumentListField]):
         if value is None:
             value = self.default
 
-        return value.to_json()
+        return dict(value) if isinstance(value, EmbeddedDocument)\
+            else json_util.dumps(list(map(dict, list(value))), cls=ExtendedJsonEncoder)
+
