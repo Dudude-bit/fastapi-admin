@@ -308,10 +308,27 @@ class EmbeddedDocumentInput(Text):
     async def parse_value(self, request: Request, value: Any):
         return json.loads(value)
 
-    async def render(self, request: Request, value: Union[EmbeddedDocument, EmbeddedDocumentListField]):
+    async def render(self, request: Request, value: EmbeddedDocument):
         if value is None:
             value = self.default
 
-        return dict(value) if isinstance(value, EmbeddedDocument)\
-            else json_util.dumps(list(map(dict, list(value))), cls=ExtendedJsonEncoder)
+        return value.to_json()
 
+
+class EmbeddedDocumentListInput(Text):
+
+    async def parse_value(self, request: Request, value: Any):
+        return json_util.loads(value)
+
+    async def render(self, request: Request, value: EmbeddedDocumentListField):
+        if value is None:
+            value = self.default
+
+        r = []
+
+        for el in value:
+            r.append(
+                json.loads(el.to_json())
+            )
+
+        return json.dumps(r)
