@@ -306,19 +306,19 @@ class ObjectIdText(Text):
 class EmbeddedDocumentInput(Text):
 
     async def parse_value(self, request: Request, value: Any):
-        return json.loads(value)
+        return super(EmbeddedDocumentInput, self).parse_value(request, json.loads(value))
 
     async def render(self, request: Request, value: EmbeddedDocument):
         if value is None:
             value = self.default
 
-        return value.to_json()
+        return super(EmbeddedDocumentInput, self).render(request, value.to_json())
 
 
 class EmbeddedDocumentListInput(Text):
 
     async def parse_value(self, request: Request, value: Any):
-        return json_util.loads(value)
+        return super(EmbeddedDocumentListInput, self).parse_value(request, json_util.loads(value))
 
     async def render(self, request: Request, value: EmbeddedDocumentListField):
         if value is None:
@@ -331,4 +331,4 @@ class EmbeddedDocumentListInput(Text):
                 json.loads(el.to_json())
             )
 
-        return json.dumps(r)
+        return super(EmbeddedDocumentListInput, self).render(request, json.dumps(r))
