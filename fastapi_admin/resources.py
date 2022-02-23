@@ -211,8 +211,7 @@ class Model(Resource):
         elif isinstance(field, BooleanField):
             display, input_ = displays.Boolean(), inputs.Switch(null=null, default=field.default)
         elif isinstance(field, DateTimeField):
-            input_ = inputs.DateTime(null=null, default=field.default)
-            display, input_ = displays.DatetimeDisplay(), input_
+            display, input_ = displays.DatetimeDisplay(), inputs.DateTime(null=null, default=field.default)
         elif isinstance(field, DateField):
             display, input_ = displays.DateDisplay(), inputs.Date(null=null, default=field.default)
         elif isinstance(field, DictField):

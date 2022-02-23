@@ -4,6 +4,7 @@ from enum import Enum as EnumCLS
 from typing import Any, List, Optional, Tuple, Type, Union
 
 import bson
+import dateutil.parser
 from mongoengine import Document, EmbeddedDocument, EmbeddedDocumentListField
 from bson import json_util
 from starlette.datastructures import UploadFile
@@ -209,9 +210,31 @@ class Editor(Text):
 class DateTime(Text):
     input_type = "datetime"
 
+    async def render(self, request: Request, value: Any):
+        if value is None:
+            value = self.default
+
+        value = value.isoformat()
+
+        return await super(DateTime, self).render(request, value)
+
+    async def parse_value(self, request: Request, value: Any):
+        return dateutil.parser.isoparse(value)
+
 
 class Date(Text):
     input_type = "date"
+
+    async def render(self, request: Request, value: Any):
+        if value is None:
+            value = self.default
+
+        value = value.isoformat()
+
+        return super(Date, self).render(request, value)
+
+    async def parse_value(self, request: Request, value: Any):
+        return dateutil.parser.parse(value)
 
 
 class File(Input):
