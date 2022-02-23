@@ -216,7 +216,7 @@ class DateTime(Text):
         else:
             value = ''
 
-        return super(DateTime, self).render(request, value)
+        return await super(DateTime, self).render(request, value)
 
     async def parse_value(self, request: Request, value: Any):
         if not value:
@@ -232,7 +232,7 @@ class Date(Text):
             value = value.isoformat()
         else:
             value = ''
-        return super(Date, self).render(request, value)
+        return await super(Date, self).render(request, value)
 
     async def parse_value(self, request: Request, value: Any):
         if not value:
