@@ -131,8 +131,6 @@ class Model(Resource):
             if isinstance(input_, inputs.File):
                 cls.enctype = "multipart/form-data"
             name = input_.context.get("name")
-            print(name, flush=True)
-            print(obj, flush=True)
             ret.append(await input_.render(request, getattr(obj, name, None)))
         return ret
 

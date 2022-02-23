@@ -211,14 +211,14 @@ class DateTime(Text):
     input_type = "datetime"
 
     async def render(self, request: Request, value: Any):
-        if value is None:
-            value = self.default
+        if value:
+            value = value.isoformat()
 
-        value = value.isoformat()
-
-        return await super(DateTime, self).render(request, value)
+        return super(DateTime, self).render(request, value)
 
     async def parse_value(self, request: Request, value: Any):
+        if not value:
+            return None
         return dateutil.parser.isoparse(value)
 
 
@@ -226,14 +226,14 @@ class Date(Text):
     input_type = "date"
 
     async def render(self, request: Request, value: Any):
-        if value is None:
-            value = self.default
-
-        value = value.isoformat()
+        if value:
+            value = value.isoformat()
 
         return super(Date, self).render(request, value)
 
     async def parse_value(self, request: Request, value: Any):
+        if not value:
+            return None
         return dateutil.parser.parse(value)
 
 
