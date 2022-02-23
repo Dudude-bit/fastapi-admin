@@ -312,7 +312,7 @@ class Number(Text):
         if not value:
             return None
         
-        return super(Number, self).parse_value(request, value)
+        return await super(Number, self).parse_value(request, value)
 
 
 class Color(Text):
