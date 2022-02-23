@@ -336,7 +336,7 @@ class EmbeddedDocumentInput(Text):
 
     async def render(self, request: Request, value: EmbeddedDocument):
         if value is None:
-            value = self.default
+            return value
 
         return await super(EmbeddedDocumentInput, self).render(request, value.to_json())
 
@@ -348,7 +348,7 @@ class EmbeddedDocumentListInput(Text):
 
     async def render(self, request: Request, value: EmbeddedDocumentListField):
         if value is None:
-            value = self.default
+            return value
 
         r = []
 
