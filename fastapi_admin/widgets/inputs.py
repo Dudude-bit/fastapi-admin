@@ -308,7 +308,7 @@ class Password(Text):
 class Number(Text):
     input_type = "number"
     
-    def parse_value(self, request: Request, value: Any):
+    async def parse_value(self, request: Request, value: Any):
         if not value:
             return None
         
