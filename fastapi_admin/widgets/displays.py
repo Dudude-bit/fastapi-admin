@@ -1,8 +1,10 @@
 import json
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Union
 
+from mongoengine.base import EmbeddedDocumentList
 from starlette.requests import Request
+from mongoengine import EmbeddedDocumentField, EmbeddedDocument
 
 from fastapi_admin import constants
 from fastapi_admin.widgets import Widget
@@ -50,5 +52,24 @@ class Image(Display):
 class Json(Display):
     template = "widgets/displays/json.html"
 
-    async def render(self, request: Request, value: dict):
+    async def render(self, request: Request, value: Union[dict, list]):
         return await super(Json, self).render(request, json.dumps(value))
+
+
+class EmbeddedDocumentDisplay(Json):
+
+    async def render(self, request: Request, value: EmbeddedDocument):
+        return super(EmbeddedDocumentDisplay, self).render(request, value.to_json())
+
+
+class EmbeddedDocumentListDisplay(Json):
+
+    async def render(self, request: Request, value: EmbeddedDocumentList):
+        r = []
+
+        for el in value:
+            r.append(
+                json.loads(el.to_json())
+            )
+
+        return await super(EmbeddedDocumentListDisplay, self).render(request, r)
