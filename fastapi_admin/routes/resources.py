@@ -97,7 +97,7 @@ async def update(
         await m2m_obj.clear()
         if items:
             await m2m_obj.add(*items)
-    obj = model.objects.filter(pk=pk)
+    obj = model.objects.get(pk=pk)
     inputs = await model_resource.get_inputs(request, obj)
     if "save" in form.keys():
         context = {
