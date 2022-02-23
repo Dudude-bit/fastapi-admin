@@ -229,11 +229,11 @@ class Model(Resource):
                 placeholder=placeholder, null=null, default=field.default
             )
         elif isinstance(field, EmbeddedDocumentField):
-            display, input_ = displays.EmbeddedDocumentDisplay(), inputs.EmbeddedDocumentInput(
+            display, input_ = displays.Display(), inputs.EmbeddedDocumentInput(
                 placeholder=placeholder, null=null, default=field.default
             )
         elif isinstance(field, EmbeddedDocumentListField):
-            display, input_ = displays.EmbeddedDocumentListDisplay(), inputs.EmbeddedDocumentListInput(
+            display, input_ = displays.Display(), inputs.EmbeddedDocumentListInput(
                 placeholder=placeholder, null=null, default=field.default
             )
         return Field(name=field_name, label=label.title(), display=display, input_=input_)
