@@ -21,5 +21,5 @@ class Widget:
         if value is None:
             value = ""
         if not self.template:
-            return "123"
+            return value
         return self.templates.get_template(self.template).render(value=value, **self.context)
