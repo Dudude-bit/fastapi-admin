@@ -307,6 +307,12 @@ class Password(Text):
 
 class Number(Text):
     input_type = "number"
+    
+    def parse_value(self, request: Request, value: Any):
+        if not value:
+            return None
+        
+        return super(Number, self).parse_value(request, value)
 
 
 class Color(Text):
