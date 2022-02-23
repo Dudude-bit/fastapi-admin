@@ -213,6 +213,8 @@ class DateTime(Text):
     async def render(self, request: Request, value: Any):
         if value:
             value = value.isoformat()
+        else:
+            value = ''
 
         return super(DateTime, self).render(request, value)
 
@@ -228,7 +230,8 @@ class Date(Text):
     async def render(self, request: Request, value: Any):
         if value:
             value = value.isoformat()
-
+        else:
+            value = ''
         return super(Date, self).render(request, value)
 
     async def parse_value(self, request: Request, value: Any):
