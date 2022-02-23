@@ -312,7 +312,7 @@ class EmbeddedDocumentInput(Text):
         if value is None:
             value = self.default
 
-        return super(EmbeddedDocumentInput, self).render(request, value.to_json())
+        return await super(EmbeddedDocumentInput, self).render(request, value.to_json())
 
 
 class EmbeddedDocumentListInput(Text):
