@@ -332,7 +332,7 @@ class ObjectIdText(Text):
 class EmbeddedDocumentInput(Text):
 
     async def parse_value(self, request: Request, value: Any):
-        return super(EmbeddedDocumentInput, self).parse_value(request, json.loads(value))
+        return await super(EmbeddedDocumentInput, self).parse_value(request, json.loads(value))
 
     async def render(self, request: Request, value: EmbeddedDocument):
         if value is None:
