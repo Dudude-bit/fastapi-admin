@@ -56,13 +56,13 @@ class Json(Display):
         return await super(Json, self).render(request, json.dumps(value))
 
 
-class EmbeddedDocumentDisplay(Json):
+class EmbeddedDocumentDisplay(Display):
 
     async def render(self, request: Request, value: EmbeddedDocument):
         return super(EmbeddedDocumentDisplay, self).render(request, value.to_json())
 
 
-class EmbeddedDocumentListDisplay(Json):
+class EmbeddedDocumentListDisplay(Display):
 
     async def render(self, request: Request, value: EmbeddedDocumentList):
         r = []
@@ -72,4 +72,4 @@ class EmbeddedDocumentListDisplay(Json):
                 json.loads(el.to_json())
             )
 
-        return await super(EmbeddedDocumentListDisplay, self).render(request, r)
+        return await super(EmbeddedDocumentListDisplay, self).render(request, json.dumps(r))
