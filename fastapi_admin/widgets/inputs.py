@@ -231,7 +231,7 @@ class Date(Text):
 
         value = value.isoformat()
 
-        return super(Date, self).render(request, value)
+        return await super(Date, self).render(request, value)
 
     async def parse_value(self, request: Request, value: Any):
         return dateutil.parser.parse(value)
